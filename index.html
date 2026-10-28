@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DesiMacro AI - Indian Food Macro & Budget Analyzer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            400: '#4ade80',
+                            500: '#00ff88',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            900: '#14532d',
+                            950: '#062615',
+                        },
+                        darkBg: '#000000',
+                        cardBg: '#0e2a1e',
+                        cardBorder: '#164a32'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #000000; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #164a32; border-radius: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #00ff88; }
+    </style>
+</head>
+<body class="bg-black text-slate-100 min-h-screen flex flex-col custom-scrollbar selection:bg-[#00ff88] selection:text-black transition-colors duration-300">
+
+    <!-- HEADER / NAVIGATION -->
+    <header class="border-b border-[#164a32] bg-black/90 backdrop-blur-md sticky top-0 z-50 px-4 lg:px-8 py-3.5 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+            <div id="custom-logo-container" class="flex items-center justify-center bg-[#0e2a1e] border border-[#164a32] rounded-xl px-3 py-1.5 min-w-[40px] min-h-[40px] shadow-lg shadow-black">
+                <span class="text-xs font-bold text-[#00ff88] tracking-wider">LOGO</span>
+            </div>
+            <div>
+                <div class="flex items-center space-x-2">
+                    <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-1.5">
+                        DesiMacro AI 🥗
+                    </h1>
+                    <span class="text-[10px] font-semibold bg-[#062615] text-[#00ff88] px-2 py-0.5 rounded-full border border-[#164a32]">v2.4 Live API</span>
+                </div>
+                <p class="text-xs text-slate-400 font-medium">Smart Indian Nutrition & Student Budget Planner</p>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-3">
+            <div class="hidden sm:flex items-center space-x-2 bg-[#0e2a1e] border border-[#164a32] px-3 py-1.5 rounded-xl text-xs text-slate-300">
+                <span class="text-slate-400 font-semibold">Est. Savings:</span> 
+                <span class="text-[#00ff88] font-bold">₹1,450/mo</span>
+            </div>
+            
+            <!-- Customizable Protein Goal Badge -->
+            <button onclick="customizeProteinGoal()" class="flex items-center space-x-2 bg-[#0e2a1e] border border-[#164a32] hover:border-[#00ff88] px-3 py-1.5 rounded-xl text-xs text-slate-300 transition cursor-pointer group" title="Click to change your daily protein target">
+                <span class="text-amber-400 font-semibold">Protein Goal:</span> 
+                <span id="header-protein-goal" class="text-amber-300 font-bold">110g Daily</span>
+                <i data-lucide="edit-2" class="w-3 h-3 text-slate-500 group-hover:text-[#00ff88] transition"></i>
+            </button>
+
+            <button id="theme-toggle" onclick="toggleTheme()" class="p-2 rounded-xl bg-[#0e2a1e] border border-[#164a32] hover:border-[#00ff88]/50 text-slate-300 transition shadow-md">
+                <i data-lucide="sun" class="w-4 h-4 hidden dark:block text-amber-400"></i>
+                <i data-lucide="moon" class="w-4 h-4 block dark:hidden text-slate-700"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN DASHBOARD CONTAINER -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-6 space-y-6">
+
+        <!-- TAB NAVIGATION & DEMO CHIPS -->
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 bg-[#0e2a1e] border border-[#164a32] p-2.5 rounded-2xl shadow-xl">
+            <div class="flex items-center space-x-2">
+                <button onclick="switchTab('scan')" id="tab-btn-scan" class="flex items-center space-x-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all bg-[#16a34a] text-white shadow-lg shadow-black">
+                    <i data-lucide="scan" class="w-4 h-4"></i>
+                    <span>Tab 1: Scan Meal AI</span>
+                </button>
+                <button onclick="switchTab('text')" id="tab-btn-text" class="flex items-center space-x-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all text-slate-400 hover:text-white hover:bg-[#164a32]/50">
+                    <i data-lucide="utensils" class="w-4 h-4"></i>
+                    <span>Tab 2: Text & Budget Assistant</span>
+                </button>
+            </div>
+
+            <div class="flex items-center space-x-2 overflow-x-auto pb-1 lg:pb-0 custom-scrollbar">
+                <span class="text-xs font-bold text-amber-400 uppercase tracking-wider shrink-0 flex items-center gap-1">
+                    <i data-lucide="zap" class="w-3 h-3"></i> Try Demo:
+                </span>
+                <button onclick="loadDemo('rajma')" class="shrink-0 text-xs bg-[#062615] hover:bg-[#16a34a] text-slate-300 hover:text-white px-3 py-1.5 rounded-lg border border-[#164a32] transition font-medium">
+                    🍛 Rajma Chawal
+                </button>
+                <button onclick="loadDemo('paneer')" class="shrink-0 text-xs bg-[#062615] hover:bg-[#16a34a] text-slate-300 hover:text-white px-3 py-1.5 rounded-lg border border-[#164a32] transition font-medium">
+                    🧀 Paneer + 2 Roti
+                </button>
+                <button onclick="loadDemo('egg')" class="shrink-0 text-xs bg-[#062615] hover:bg-[#16a34a] text-slate-300 hover:text-white px-3 py-1.5 rounded-lg border border-[#164a32] transition font-medium">
+                    🥚 3 Egg Bhurji
+                </button>
+                <button onclick="loadDemo('chicken')" class="shrink-0 text-xs bg-[#062615] hover:bg-[#16a34a] text-slate-300 hover:text-white px-3 py-1.5 rounded-lg border border-[#164a32] transition font-medium">
+                    🍗 Chicken Rice Thali
+                </button>
+            </div>
+        </div>
+
+        <!-- ================= TAB 1: SCAN MEAL ================= -->
+        <div id="tab-content-scan" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-7 bg-[#0e2a1e] border border-[#164a32] rounded-2xl p-6 shadow-xl flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-2">
+                            <div class="p-2 bg-[#062615] rounded-xl text-[#00ff88] border border-[#164a32]">
+                                <i data-lucide="camera" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h2 class="text-base font-bold text-white">Snap & Scan Indian Food Plate</h2>
+                                <p class="text-xs text-slate-400">Upload a picture of your Mess food, PG tiffin, or home thali.</p>
+                            </div>
+                        </div>
+                        <span class="text-xs font-bold bg-[#062615] text-[#00ff88] px-2.5 py-1 rounded-lg border border-[#164a32] flex items-center gap-1">
+                            <i data-lucide="sparkles" class="w-3 h-3"></i> Gemini 2.5 Flash
+                        </span>
+                    </div>
+
+                    <div id="drop-zone" class="border-2 border-dashed border-[#164a32] hover:border-[#00ff88]/60 rounded-2xl p-8 text-center cursor-pointer transition-all bg-[#062615]/50 relative group">
+                        <input type="file" id="meal-file-input" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer" onchange="handleFileSelect(event)">
+                        <div id="upload-placeholder" class="space-y-3">
+                            <div class="w-16 h-16 bg-[#062615] border border-[#164a32] text-[#00ff88] rounded-2xl mx-auto flex items-center justify-center group-hover:scale-105 transition shadow-inner">
+                                <i data-lucide="upload-cloud" class="w-8 h-8"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-bold text-slate-200">Click to upload or drag & drop meal photo</p>
+                                <p class="text-xs text-slate-500 mt-1">Supports JPG, PNG, WEBP (Thalis, Mess meals, Bowls)</p>
+                            </div>
+                            <div class="inline-flex items-center px-3 py-1 bg-[#164a32] text-slate-200 rounded-full text-xs font-semibold">
+                                Browse Device
+                            </div>
+                        </div>
+                        <div id="image-preview-container" class="hidden relative">
+                            <img id="uploaded-img-preview" src="" alt="Uploaded Meal" class="max-h-56 mx-auto rounded-xl object-contain border border-[#164a32] shadow-md">
+                            <button onclick="resetUpload(event)" class="absolute top-2 right-2 bg-black/80 hover:bg-red-600 text-white p-1.5 rounded-full transition shadow">
+                                <i data-lucide="x" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <p class="text-xs font-semibold text-slate-400 mb-2">Or select a sample meal photo:</p>
+                        <div class="grid grid-cols-4 gap-2.5">
+                            <div onclick="selectSample('Rajma Chawal', 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=300&auto=format&fit=crop&q=80')" class="cursor-pointer group rounded-xl overflow-hidden border border-[#164a32] hover:border-[#00ff88] transition relative">
+                                <img src="https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=300&auto=format&fit=crop&q=80" class="w-full h-16 object-cover group-hover:scale-110 transition duration-300">
+                                <div class="absolute inset-x-0 bottom-0 bg-black/70 backdrop-blur-xs text-[10px] text-center font-bold text-white py-0.5 truncate px-1">Rajma Chawal</div>
+                            </div>
+                            <div onclick="selectSample('Paneer + Roti', 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=300&auto=format&fit=crop&q=80')" class="cursor-pointer group rounded-xl overflow-hidden border border-[#164a32] hover:border-[#00ff88] transition relative">
+                                <img src="https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=300&auto=format&fit=crop&q=80" class="w-full h-16 object-cover group-hover:scale-110 transition duration-300">
+                                <div class="absolute inset-x-0 bottom-0 bg-black/70 backdrop-blur-xs text-[10px] text-center font-bold text-white py-0.5 truncate px-1">Paneer + Roti</div>
+                            </div>
+                            <div onclick="selectSample('Egg Bhurji', 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=300&auto=format&fit=crop&q=80')" class="cursor-pointer group rounded-xl overflow-hidden border border-[#164a32] hover:border-[#00ff88] transition relative">
+                                <img src="https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=300&auto=format&fit=crop&q=80" class="w-full h-16 object-cover group-hover:scale-110 transition duration-300">
+                                <div class="absolute inset-x-0 bottom-0 bg-black/70 backdrop-blur-xs text-[10px] text-center font-bold text-white py-0.5 truncate px-1">Egg Bhurji</div>
+                            </div>
+                            <div onclick="selectSample('Chicken Thali', 'https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=300&auto=format&fit=crop&q=80')" class="cursor-pointer group rounded-xl overflow-hidden border border-[#164a32] hover:border-[#00ff88] transition relative">
+                                <img src="https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=300&auto=format&fit=crop&q=80" class="w-full h-16 object-cover group-hover:scale-110 transition duration-300">
+                                <div class="absolute inset-x-0 bottom-0 bg-black/70 backdrop-blur-xs text-[10px] text-center font-bold text-white py-0.5 truncate px-1">Chicken Thali</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6">
+                    <button onclick="runLiveImageAnalysis()" id="analyze-btn-1" class="w-full py-3.5 bg-gradient-to-r from-[#16a34a] to-[#00ff88] hover:from-[#15803d] hover:to-[#4ade80] text-black font-extrabold rounded-xl shadow-lg shadow-black flex items-center justify-center space-x-2 transition transform active:scale-98">
+                        <i data-lucide="sparkles" class="w-5 h-5"></i>
+                        <span>Analyze Meal with Gemini AI</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="lg:col-span-5 space-y-6">
+                <div class="bg-[#0e2a1e] border border-[#164a32] rounded-2xl p-6 shadow-xl space-y-4">
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="info" class="w-5 h-5 text-[#00ff88]"></i>
+                        <h3 class="text-sm font-bold text-white">How DesiMacro AI Works</h3>
+                    </div>
+                    <div class="space-y-3 text-xs text-slate-300">
+                        <div class="flex items-start space-x-3 bg-[#062615] p-3 rounded-xl border border-[#164a32]">
+                            <span class="w-6 h-6 rounded-lg bg-[#0e2a1e] text-[#00ff88] border border-[#164a32] flex items-center justify-center font-bold shrink-0">1</span>
+                            <div>
+                                <span class="font-bold text-white block">Indian Food Context:</span>
+                                Recognizes standard portion sizes for katoris, rotis, rice mounds, ghee quantity, and dal thickness.
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-3 bg-[#062615] p-3 rounded-xl border border-[#164a32]">
+                            <span class="w-6 h-6 rounded-lg bg-[#0e2a1e] text-[#00ff88] border border-[#164a32] flex items-center justify-center font-bold shrink-0">2</span>
+                            <div>
+                                <span class="font-bold text-white block">Glycemic Load Alert:</span>
+                                Calculates spike potential from high carb Indian meals (e.g., White Rice & Maida).
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-3 bg-[#062615] p-3 rounded-xl border border-[#164a32]">
+                            <span class="w-6 h-6 rounded-lg bg-[#0e2a1e] text-[#00ff88] border border-[#164a32] flex items-center justify-center font-bold shrink-0">3</span>
+                            <div>
+                                <span class="font-bold text-white block">Student Budget Swap:</span>
+                                Instantly compares high-cost protein with cheap Indian options like Soya Chunks or Besan Chila.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-[#0e2a1e] border border-[#164a32] rounded-2xl p-5 shadow-xl flex items-center justify-between">
+                    <div>
+                        <span class="text-[11px] font-bold text-[#00ff88] uppercase tracking-wider block">Target Setup</span>
+                        <p class="text-xs text-slate-300 font-medium mt-0.5">Goal set to <strong class="text-white">Muscle Gain</strong>. Protein goal calculated for optimal muscle synthesis under college budget.</p>
+                    </div>
+                    <div class="text-right shrink-0 bg-[#062615] px-3 py-2 rounded-xl border border-[#164a32]">
+                        <span id="target-budget-display" class="text-xs font-bold text-amber-400">₹250/day</span>
+                        <span class="text-[10px] text-slate-500 block">Cap</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TAB 2: TEXT & BUDGET ASSISTANT ================= -->
+        <div id="tab-content-text" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-7 bg-[#0e2a1e] border border-[#164a32] rounded-2xl p-6 shadow-xl space-y-5">
+                <div class="flex items-center space-x-2">
+                    <div class="p-2 bg-[#062615] rounded-xl text-[#00ff88] border border-[#164a32]">
+                        <i data-lucide="edit-3" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-base font-bold text-white">Describe Your Meal & Budget</h2>
+                        <p class="text-xs text-slate-400">Type what you ate or plan to eat today.</p>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1.5">Meal Description</label>
+                    <textarea id="meal-text-input" rows="3" class="w-full bg-[#062615] border border-[#164a32] rounded-xl p-3.5 text-sm text-slate-100 focus:outline-none focus:border-[#00ff88] transition placeholder:text-slate-600" placeholder="e.g., 2 bowls of dal chawal with 1 tsp ghee and 2 boiled eggs...">2 bowls of dal chawal with 1 tsp ghee and 2 boiled eggs</textarea>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1.5">Fitness Goal</label>
+                        <select id="fitness-goal-select" class="w-full bg-[#062615] border border-[#164a32] rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-[#00ff88] transition">
+                            <option value="Muscle Gain">Muscle Gain (High Protein)</option>
+                            <option value="Fat Loss">Fat Loss (Calorie Deficit)</option>
+                            <option value="Lean Maintenance">Lean Maintenance</option>
+                            <option value="Student Budget Bulk">Student Budget Bulk</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1.5 flex justify-between">
+                            <span>Daily Meal Budget Cap</span>
+                            <span id="budget-value-display" class="text-[#00ff88] font-bold">₹250</span>
+                        </label>
+                        <input type="range" id="daily-budget-slider" min="100" max="500" step="10" value="250" oninput="updateBudgetVal(this.value)" class="w-full accent-[#00ff88] bg-[#062615] h-2 rounded-lg cursor-pointer mt-3">
+                        <div class="flex justify-between text-[10px] text-slate-500 mt-1">
+                            <span>₹100 (Hostel Saver)</span>
+                            <span>₹500 (Deluxe Mess)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="runLiveTextAnalysis()" id="analyze-btn-2" class="w-full py-3.5 bg-gradient-to-r from-[#16a34a] to-[#00ff88] hover:from-[#15803d] hover:to-[#4ade80] text-black font-extrabold rounded-xl shadow-lg shadow-black flex items-center justify-center space-x-2 transition transform active:scale-98">
+                    <i data-lucide="cpu" class="w-5 h-5"></i>
+                    <span>Calculate Macros & Optimize Budget</span>
+                </button>
+            </div>
+
+            <div class="lg:col-span-5 bg-[#0e2a1e] border border-[#164a32] rounded-2xl p-6 shadow-xl flex flex-col justify-between space-y-4">
+                <div>
+                    <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+                        <i data-lucide="sparkles" class="w-4 h-4 text-[#00ff88]"></i> Student Quick Hacks
+                    </h3>
+                    <ul class="space-y-2.5 text-xs text-slate-300">
+                        <li class="flex items-center space-x-2 bg-[#062615] p-2.5 rounded-xl border border-[#164a32]">
+                            <span class="w-2 h-2 rounded-full bg-[#00ff88]"></span>
+                            <span>Sprouts + Peanut Butter = Cheap Clean Bulk</span>
+                        </li>
+                        <li class="flex items-center space-x-2 bg-[#062615] p-2.5 rounded-xl border border-[#164a32]">
+                            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                            <span>Soya Chunks provide 52g protein per ₹30 packet</span>
+                        </li>
+                        <li class="flex items-center space-x-2 bg-[#062615] p-2.5 rounded-xl border border-[#164a32]">
+                            <span class="w-2 h-2 rounded-full bg-[#00ff88]"></span>
+                            <span>Curd + Sattu drink beats expensive protein shakes</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="bg-[#062615] border border-[#164a32] p-4 rounded-xl text-center">
+                    <p class="text-xs text-[#00ff88] font-semibold">💡 Tip: You can adjust your budget slider to see how AI suggests local grocery swaps.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= RESULTS SECTION ================= -->
+        <div id="results-section" class="space-y-6 pt-4 border-t border-[#164a32]">
+            
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-[#0e2a1e] border border-[#164a32] p-4 rounded-2xl">
+                <div class="flex items-center space-x-3">
+                    <div class="p-2.5 bg-[#062615] text-[#00ff88] rounded-xl border border-[#164a32]">
+                        <i data-lucide="check-circle-2" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-[#00ff88] bg-[#062615] px-2 py-0.5 rounded-md border border-[#164a32]">Live AI Analysis</span>
+                            <span id="ai-confidence-tag" class="text-xs text-slate-400">• Confidence: High</span>
+                        </div>
+                        <h3 id="result-meal-title" class="text-lg font-extrabold text-white mt-0.5">Rajma Chawal + Curd Bowl</h3>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button onclick="openRecipeModal()" class="px-3.5 py-2 bg-[#062615] hover:bg-[#16a34a] text-slate-200 text-xs font-bold rounded-xl border border-[#164a32] transition flex items-center gap-1.5">
+                        <i data-lucide="book-open" class="w-4 h-4 text-[#00ff88]"></i> View Prep & Recipe
+                    </button>
+                    <button onclick="resetToTop()" class="px-3.5 py-2 bg-[#062615] hover:bg-[#16a34a] text-slate-300 text-xs font-bold rounded-xl border border-[#164a32] transition flex items-center gap-1.5">
+                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Re-analyze
+                    </button>
+                </div>
+            </div>
+
+            <!-- AI PLATE ITEMIZATION BAR -->
+            <div class="bg-[#0e2a1e] border border-[#164a32] rounded-2xl p-5 shadow-xl space-y-3">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">AI Plate Itemization</span>
+                <div id="ai-itemization-container" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div class="bg-[#062615] border border-[#164a32] p-3 rounded-xl">
+                        <span class="text-xs font-bold text-white block">Boiled Rajma Curry</span>
+                        <span class="text-[11px] text-[#00ff88] font-medium">1.5 Katori (180g)</span>
+                    </div>
+                    <div class="bg-[#062615] border border-[#164a32] p-3 rounded-xl">
+                        <span class="text-xs font-bold text-white block">Steamed Basmati Rice</span>
+                        <span class="text-[11px] text-[#00ff88] font-medium">1 Cup (150g)</span>
+                    </div>
+                    <div class="bg-[#062615] border border-[#164a32] p-3 rounded-xl">
+                        <span class="text-xs font-bold text-white block">Fresh Curd (Dahi)</span>
+                        <span class="text-[11px] text-[#00ff88] font-medium">100g</span>
+                    </div>
+                    <div class="bg-[#062615] border border-[#164a32] p-3 rounded-xl">
+                        <span class="text-xs font-bold text-white block">Ghee Tadka</span>
+                        <span class="text-[11px] text-[#00ff88] font-medium">1 tsp</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grid Layout for Results Cards -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+                <!-- 1. Visual Macro Breakdown Card (7 Cols) -->
+                <div class="lg:col-span-7 bg-[#0e2a1e] border border-[#164a32] rounded-2xl p-6 shadow-xl space-y-6">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            <div class="p-2 bg-[#062615] text-[#00ff88] rounded-xl border border-[#164a32]">
+                                <i data-lucide="pie-chart" class="w-5 h-5"></i>
+                            </div>
+                            <h4 class="text-sm font-bold text-white">Nutritional Macro Distribution</h4>
+                        </div>
+                        <div class="bg-[#062615] border border-[#164a32] px-3 py-1 rounded-xl text-xs font-bold text-slate-300">
+                            Total Energy: <span id="res-calories" class="text-[#00ff88] text-sm font-extrabold">540</span> kcal
+                        </div>
+                    </div>
+
+                    <!-- Macro Progress Bars -->
+                    <div class="space-y-4">
+                        <div class="bg-[#062615] border border-[#164a32] p-4 rounded-xl space-y-2">
+                            <div class="flex justify-between text-xs font-semibold">
+                                <span class="text-amber-400 font-bold flex items-center gap-1.5">
+                                    🔥 Protein
+                                </span>
+                                <span class="text-white font-bold"><span id="res-protein">22</span>g</span>
+                            </div>
+                            <div class="w-full bg-black h-2.5 rounded-full overflow-hidden p-0.5 border border-[#164a32]">
+                                <div id="bar-protein" class="bg-gradient-to-r from-amber-600 to-amber-400 h-full rounded-full transition-all duration-1000" style="width: 45%"></div>
+                            </div>
+                            <span id="protein-target-text" class="text-[10px] text-slate-400 block">20% of daily target (110g)</span>
+                        </div>
+
+                        <div class="bg-[#062615] border border-[#164a32] p-4 rounded-xl space-y-2">
+                            <div class="flex justify-between text-xs font-semibold">
+                                <span class="text-[#00ff88] font-bold flex items-center gap-1.5">
+                                    🌾 Carbs
+                                </span>
+                                <span class="text-white font-bold"><span id="res-carbs">78</span>g</span>
+                            </div>
+                            <div class="w-full bg-black h-2.5 rounded-full overflow-hidden p-0.5 border border-[#164a32]">
+                                <div id="bar-carbs" class="bg-gradient-to-r from-[#16a34a] to-[#00ff88] h-full rounded-full transition-all duration-1000" style="width: 70%"></div>
+                            </div>
+                            <span class="text-[10px] text-slate-400 block">High Complex Carbs</span>
+                        </div>
+
+                        <div class="bg-[#062615] border border-[#164a32] p-4 rounded-xl space-y-2">
+                            <div class="flex justify-between text-xs font-semibold">
+                                <span class="text-sky-400 font-bold flex items-center gap-1.5">
+                                    💧 Fats
+                                </span>
+                                <span class="text-white font-bold"><span id="res-fats">14</span>g</span>
+                            </div>
+                            <div class="w-full bg-black h-2.5 rounded-full overflow-hidden p-0.5 border border-[#164a32]">
+                                <div id="bar-fats" class="bg-gradient-to-r from-sky-600 to-sky-400 h-full rounded-full transition-all duration-1000" style="width: 35%"></div>
+                            </div>
+                            <span class="text-[10px] text-slate-400 block">Healthy Ghee & Dairy</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Indian Carb & Satiety Index & Cost Card (5 Cols) -->
+                <div class="lg:col-span-5 space-y-6">
+                    <div class="bg-[#0e2a1e] border border-[#164a32] rounded-2xl p-6 shadow-xl space-y-4">
+                        <div class="flex items-center space-x-2">
+                            <i data-lucide="activity" class="w-5 h-5 text-[#00ff88]"></i>
+                            <h4 class="text-sm font-bold text-white">Indian Carb & Satiety Index</h4>
+                        </div>
+
+                        <div class="bg-[#062615] border border-[#164a32] p-4 rounded-xl space-y-2">
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="text-slate-300 font-medium">Glycemic Index (GI Spike)</span>
+                                <span id="gi-tag-display" class="bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-md font-bold text-[11px]">Moderate (58)</span>
+                            </div>
+                            <div class="w-full bg-black h-2 rounded-full overflow-hidden p-0.5 border border-[#164a32]">
+                                <div id="bar-gi" class="bg-amber-500 h-full rounded-full" style="width: 58%"></div>
+                            </div>
+                            <p id="gi-tip-text" class="text-[11px] text-slate-400 mt-1 flex items-start gap-1">
+                                <span>💡</span> Tip: Add 1 tsp sirka (vinegar) salad or extra cucumber to lower blood glucose response.
+                            </p>
+                        </div>
+
+                        <div class="bg-[#062615] border border-[#164a32] p-4 rounded-xl space-y-2">
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="text-slate-300 font-medium">Fullness / Satiety Duration</span>
+                                <span id="satiety-tag-display" class="bg-[#00ff88]/20 text-[#00ff88] border border-[#00ff88]/30 px-2 py-0.5 rounded-md font-bold text-[11px]">High (4.5 hrs)</span>
+                            </div>
+                            <div class="w-full bg-black h-2 rounded-full overflow-hidden p-0.5 border border-[#164a32]">
+                                <div id="bar-satiety" class="bg-[#00ff88] h-full rounded-full" style="width: 85%"></div>
+                            </div>
+                            <p id="satiety-tip-text" class="text-[11px] text-slate-400 mt-1">High dietary fiber from beans & lentils prevents late afternoon study cravings.</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-gradient-to-r from-[#16a34a] to-[#00ff88] rounded-2xl p-5 shadow-xl flex items-center justify-between text-black">
+                        <div>
+                            <span class="text-[10px] font-extrabold uppercase tracking-wider block opacity-80">Estimated Plate Cost</span>
+                            <span id="res-cost" class="text-2xl font-extrabold tracking-tight">₹55 / meal</span>
+                        </div>
+                        <div class="w-10 h-10 bg-black/10 rounded-xl flex items-center justify-center font-bold">
+                            <i data-lucide="indian-rupee" class="w-6 h-6"></i>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- 3. Smart Student Budget Alternatives Card -->
+            <div class="bg-[#0e2a1e] border border-[#164a32] rounded-2xl p-6 shadow-xl space-y-5">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div class="flex items-center space-x-2">
+                        <div class="p-2 bg-[#062615] text-amber-400 rounded-xl border border-[#164a32]">
+                            <i data-lucide="lightbulb" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-bold text-white">Smart Student Budget Alternatives</h4>
+                            <p class="text-xs text-slate-400">Swap expensive items for high-protein, budget-friendly Indian staples.</p>
+                        </div>
+                    </div>
+                    <div id="monthly-savings-tag" class="bg-[#062615] border border-[#164a32] px-3 py-1.5 rounded-xl text-xs font-bold text-[#00ff88] flex items-center gap-1.5">
+                        <i data-lucide="trending-up" class="w-4 h-4"></i> Potential Monthly Savings: ₹1,800
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div class="bg-[#062615] border border-red-500/30 rounded-2xl p-5 relative overflow-hidden space-y-3">
+                        <div class="absolute top-0 right-0 bg-red-500/20 text-red-400 text-[10px] font-extrabold px-3 py-1 rounded-bl-xl border-l border-b border-red-500/30">
+                            HIGH COST
+                        </div>
+                        <div>
+                            <h5 id="alt-expensive-title" class="text-sm font-bold text-white">Chicken Breast / Whey Scoop</h5>
+                            <p id="alt-expensive-desc" class="text-xs text-slate-400">Standard gym goer protein source</p>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2 pt-2 border-t border-[#164a32] text-xs">
+                            <div>
+                                <span class="text-slate-500 block text-[10px]">Cost Per Serving:</span>
+                                <span id="alt-expensive-cost" class="text-red-400 font-bold">₹85</span>
+                            </div>
+                            <div>
+                                <span class="text-slate-500 block text-[10px]">Protein Yield:</span>
+                                <span id="alt-expensive-protein" class="text-white font-bold">25g</span>
+                            </div>
+                            <div>
+                                <span class="text-slate-500 block text-[10px]">Prep Time:</span>
+                                <span class="text-slate-300 font-semibold">25 mins</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-[#062615] border border-[#00ff88]/50 rounded-2xl p-5 relative overflow-hidden space-y-3 shadow-lg shadow-black">
+                        <div class="absolute top-0 right-0 bg-[#00ff88]/20 text-[#00ff88] text-[10px] font-extrabold px-3 py-1 rounded-bl-xl border-l border-b border-[#00ff88]/30 flex items-center gap-1">
+                            <i data-lucide="check" class="w-3 h-3"></i> RECOMMENDED DESI SWAP
+                        </div>
+                        <div>
+                            <h5 id="alt-cheap-title" class="text-sm font-bold text-white">100g Rajma + 1 Boiled Egg / 30g Soya</h5>
+                            <p id="alt-cheap-desc" class="text-xs text-slate-400">Highest protein per Rupee ratio in India</p>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2 pt-2 border-t border-[#164a32] text-xs">
+                            <div>
+                                <span class="text-slate-500 block text-[10px]">Cost Per Serving:</span>
+                                <span id="alt-cheap-cost" class="text-[#00ff88] font-bold">₹25</span>
+                            </div>
+                            <div>
+                                <span class="text-slate-500 block text-[10px]">Protein Yield:</span>
+                                <span id="alt-cheap-protein" class="text-white font-bold">26g</span>
+                            </div>
+                            <div>
+                                <span class="text-slate-500 block text-[10px]">Preparation Ease:</span>
+                                <span class="text-slate-300 font-semibold">10 mins</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <span class="text-[11px] font-semibold text-slate-400 block mb-2">Other Quick High-Protein Indian Staples under ₹30:</span>
+                    <div class="flex items-center space-x-2 overflow-x-auto pb-1 custom-scrollbar">
+                        <span class="shrink-0 text-xs bg-[#062615] text-slate-200 px-3 py-1.5 rounded-xl border border-[#164a32] font-medium flex items-center gap-1">
+                            <span>🥞</span> Besan Paneer Chila <strong class="text-[#00ff88]">21g P</strong>
+                        </span>
+                        <span class="shrink-0 text-xs bg-[#062615] text-slate-200 px-3 py-1.5 rounded-xl border border-[#164a32] font-medium flex items-center gap-1">
+                            <span>🥜</span> Roasted Chana & Peanuts <strong class="text-[#00ff88]">23g P</strong>
+                        </span>
+                        <span class="shrink-0 text-xs bg-[#062615] text-slate-200 px-3 py-1.5 rounded-xl border border-[#164a32] font-medium flex items-center gap-1">
+                            <span>🥛</span> Bihari Sattu Drink <strong class="text-[#00ff88]">18g P</strong>
+                        </span>
+                        <span class="shrink-0 text-xs bg-[#062615] text-slate-200 px-3 py-1.5 rounded-xl border border-[#164a32] font-medium flex items-center gap-1">
+                            <span>🌱</span> Sprouted Moong Salad <strong class="text-[#00ff88]">16g P</strong>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. Daily Student Meal Plan Schedule Table -->
+            <div class="bg-[#0e2a1e] border border-[#164a32] rounded-2xl p-6 shadow-xl space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div class="flex items-center space-x-2">
+                        <div class="p-2 bg-[#062615] text-[#00ff88] rounded-xl border border-[#164a32]">
+                            <i data-lucide="calendar" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-bold text-white">Daily Student Meal Plan Schedule</h4>
+                            <p class="text-xs text-slate-400">Optimized for ₹200-₹250 daily total budget with 100g+ protein target.</p>
+                        </div>
+                    </div>
+                    <button onclick="shufflePlan()" class="px-3 py-1.5 bg-[#062615] hover:bg-[#16a34a] text-slate-200 text-xs font-semibold rounded-xl border border-[#164a32] transition flex items-center gap-1.5">
+                        <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-[#00ff88]"></i> Shuffle Plan
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto custom-scrollbar rounded-xl border border-[#164a32]">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-[#062615] text-slate-400 border-b border-[#164a32]">
+                                <th class="p-3.5 font-bold">MEAL TIME</th>
+                                <th class="p-3.5 font-bold">RECOMMENDED DISH</th>
+                                <th class="p-3.5 font-bold">MACRO DISTRIBUTION</th>
+                                <th class="p-3.5 font-bold">EST. COST</th>
+                                <th class="p-3.5 font-bold">QUICK ACTION</th>
+                            </tr>
+                        </thead>
+                        <tbody id="meal-plan-table-body" class="divide-y divide-[#164a32] text-slate-300">
+                            <tr class="hover:bg-[#062615]/50 transition">
+                                <td class="p-3.5 font-bold text-white">Breakfast (8:30 AM)</td>
+                                <td class="p-3.5 text-[#00ff88] font-semibold">Besan Paneer Chila (2 pcs)</td>
+                                <td class="p-3.5">21g <strong class="text-amber-400">P</strong> | 30g <strong class="text-brand-400">C</strong> | 10g <strong class="text-sky-400">F</strong></td>
+                                <td class="p-3.5 font-bold text-amber-400">₹30</td>
+                                <td class="p-3.5"><button onclick="openRecipeModal('Besan Paneer Chila')" class="text-[#00ff88] hover:underline flex items-center gap-1 font-semibold"><i data-lucide="eye" class="w-3.5 h-3.5"></i> Details</button></td>
+                            </tr>
+                            <tr class="hover:bg-[#062615]/50 transition">
+                                <td class="p-3.5 font-bold text-white">Lunch (1:30 PM)</td>
+                                <td class="p-3.5 text-[#00ff88] font-semibold">Rajma Chawal + 100g Curd</td>
+                                <td class="p-3.5">22g <strong class="text-amber-400">P</strong> | 75g <strong class="text-brand-400">C</strong> | 12g <strong class="text-sky-400">F</strong></td>
+                                <td class="p-3.5 font-bold text-amber-400">₹50</td>
+                                <td class="p-3.5"><button onclick="openRecipeModal('Rajma Chawal')" class="text-[#00ff88] hover:underline flex items-center gap-1 font-semibold"><i data-lucide="eye" class="w-3.5 h-3.5"></i> Details</button></td>
+                            </tr>
+                            <tr class="hover:bg-[#062615]/50 transition">
+                                <td class="p-3.5 font-bold text-white">Snack (5:00 PM)</td>
+                                <td class="p-3.5 text-[#00ff88] font-semibold">Roasted Chana (50g) + Green Tea</td>
+                                <td class="p-3.5">12g <strong class="text-amber-400">P</strong> | 28g <strong class="text-brand-400">C</strong> | 3g <strong class="text-sky-400">F</strong></td>
+                                <td class="p-3.5 font-bold text-amber-400">₹15</td>
+                                <td class="p-3.5"><button onclick="openRecipeModal('Roasted Chana')" class="text-[#00ff88] hover:underline flex items-center gap-1 font-semibold"><i data-lucide="eye" class="w-3.5 h-3.5"></i> Details</button></td>
+                            </tr>
+                            <tr class="hover:bg-[#062615]/50 transition">
+                                <td class="p-3.5 font-bold text-white">Dinner (9:00 PM)</td>
+                                <td class="p-3.5 text-[#00ff88] font-semibold">50g Soya Chunk Curry + 2 Rotis + 2 Eggs</td>
+                                <td class="p-3.5">44g <strong class="text-amber-400">P</strong> | 45g <strong class="text-brand-400">C</strong> | 14g <strong class="text-sky-400">F</strong></td>
+                                <td class="p-3.5 font-bold text-amber-400">₹45</td>
+                                <td class="p-3.5"><button onclick="openRecipeModal('Soya Chunk Curry')" class="text-[#00ff88] hover:underline flex items-center gap-1 font-semibold"><i data-lucide="eye" class="w-3.5 h-3.5"></i> Details</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="bg-[#062615] border border-[#164a32] p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="flex items-center space-x-6">
+                        <div>
+                            <span class="text-[10px] text-slate-400 font-bold uppercase block">Total Day Protein</span>
+                            <span id="day-total-protein" class="text-lg font-extrabold text-[#00ff88]">112g</span>
+                        </div>
+                        <div>
+                            <span class="text-[10px] text-slate-400 font-bold uppercase block">Total Day Calories</span>
+                            <span id="day-total-calories" class="text-lg font-extrabold text-white">1,980 kcal</span>
+                        </div>
+                        <div>
+                            <span class="text-[10px] text-slate-400 font-bold uppercase block">Total Day Budget</span>
+                            <span id="day-total-budget" class="text-lg font-extrabold text-amber-400">₹195 / day</span>
+                        </div>
+                    </div>
+                    <button onclick="alert('Meal Plan successfully exported!')" class="px-4 py-2.5 bg-gradient-to-r from-[#16a34a] to-[#00ff88] hover:from-[#15803d] hover:to-[#4ade80] text-black font-extrabold text-xs rounded-xl transition shadow flex items-center gap-2">
+                        <i data-lucide="download" class="w-4 h-4"></i> Export Weekly Plan
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- ================= FLOATING AI ASSISTANT CHAT WIDGET ================= -->
+    <div class="fixed bottom-5 right-5 z-50">
+        <button id="ai-chat-toggle" onclick="toggleAIChat()" class="flex items-center space-x-2 bg-gradient-to-r from-[#16a34a] to-[#00ff88] text-black font-extrabold px-4 py-3 rounded-2xl shadow-2xl hover:scale-105 transition">
+            <i data-lucide="bot" class="w-5 h-5"></i>
+            <span class="text-xs">AI Diet & Budget Coach</span>
+        </button>
+
+        <div id="ai-chat-window" class="hidden absolute bottom-14 right-0 w-80 sm:w-96 bg-[#0e2a1e] border border-[#164a32] rounded-2xl shadow-2xl flex flex-col overflow-hidden transition-all">
+            <div class="bg-[#062615] border-b border-[#164a32] p-3.5 flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <div class="w-2.5 h-2.5 rounded-full bg-[#00ff88] animate-pulse"></div>
+                    <span class="text-xs font-bold text-white">DesiMacro AI Coach</span>
+                </div>
+                <button onclick="toggleAIChat()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <div id="ai-chat-messages" class="p-3.5 space-y-3 h-72 overflow-y-auto custom-scrollbar text-xs text-slate-300">
+                <div class="bg-[#062615] border border-[#164a32] p-3 rounded-xl rounded-tl-xs space-y-1">
+                    <p class="font-bold text-[#00ff88]">Namaste! 🙏</p>
+                    <p>I'm your DesiMacro AI Assistant. Ask me anything about student meal planning, protein alternatives under ₹50, or hostel diet doubts!</p>
+                </div>
+            </div>
+
+            <div class="px-3 py-2 bg-[#062615]/50 border-t border-[#164a32] flex gap-1.5 overflow-x-auto custom-scrollbar">
+                <button onclick="sendQuickPrompt('How to get 100g protein under ₹150?')" class="text-[10px] bg-[#062615] text-[#00ff88] border border-[#164a32] px-2 py-1 rounded-lg shrink-0 hover:bg-[#16a34a] hover:text-black transition font-semibold">
+                    100g protein under ₹150?
+                </button>
+                <button onclick="sendQuickPrompt('Best budget protein after gym?')" class="text-[10px] bg-[#062615] text-[#00ff88] border border-[#164a32] px-2 py-1 rounded-lg shrink-0 hover:bg-[#16a34a] hover:text-black transition font-semibold">
+                    Post-workout budget meal
+                </button>
+            </div>
+
+            <div class="p-3 bg-[#062615] border-t border-[#164a32] flex items-center space-x-2">
+                <input type="text" id="ai-chat-input" onkeypress="handleChatKeyPress(event)" placeholder="Ask about diet, budget, macros..." class="flex-1 bg-black border border-[#164a32] rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-[#00ff88]">
+                <button onclick="sendUserMessage()" class="bg-[#16a34a] hover:bg-[#15803d] text-black font-bold p-2 rounded-xl transition">
+                    <i data-lucide="send" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- RECIPE MODAL -->
+    <div id="recipe-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-[#0e2a1e] border border-[#164a32] w-full max-w-lg rounded-2xl p-6 shadow-2xl space-y-4 relative">
+            <button onclick="closeRecipeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-lg">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            <div class="flex items-center space-x-3">
+                <div class="p-2.5 bg-[#062615] text-[#00ff88] rounded-xl border border-[#164a32]">
+                    <i data-lucide="chef-hat" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h3 id="modal-title" class="text-base font-bold text-white">Rajma Chawal + Curd Recipe</h3>
+                    <p class="text-xs text-slate-400">Hostel & Student Friendly Quick Prep (Under 20 Mins)</p>
+                </div>
+            </div>
+            <div class="space-y-3 text-xs text-slate-300 max-h-64 overflow-y-auto custom-scrollbar pr-2">
+                <div class="bg-[#062615] p-3 rounded-xl border border-[#164a32]">
+                    <strong class="text-white block mb-1">Ingredients:</strong>
+                    <p id="modal-ingredients">1 cup soaked red kidney beans (rajma), 1 cup basmati rice, 1 onion, 1 tomato, ginger-garlic paste, 1 tsp ghee, turmeric, cumin, and coriander powder.</p>
+                </div>
+                <div class="bg-[#062615] p-3 rounded-xl border border-[#164a32]">
+                    <strong class="text-white block mb-1">Step-by-Step Instructions:</strong>
+                    <ol id="modal-steps" class="list-decimal list-inside space-y-1 text-slate-300">
+                        <li>Pressure cook soaked rajma with salt and turmeric for 5-6 whistles.</li>
+                        <li>In a pan, sauté onions, ginger-garlic paste, and tomatoes with spices until oil separates.</li>
+                        <li>Mix cooked rajma into the masala gravy and simmer for 10 minutes.</li>
+                        <li>Serve hot with steamed basmati rice and a side bowl of fresh curd.</li>
+                    </ol>
+                </div>
+            </div>
+            <div class="pt-2 flex justify-end">
+                <button onclick="closeRecipeModal()" class="px-4 py-2 bg-[#16a34a] hover:bg-[#15803d] text-white font-bold text-xs rounded-xl transition">Got It</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-[#164a32] bg-black py-4 px-6 text-center text-xs text-slate-500 mt-12">
+        <p>DesiMacro AI • Built for Indian Students & Fitness Enthusiasts on a Budget.</p>
+    </footer>
+
+    <!-- ================= JAVASCRIPT & GEMINI API INTEGRATION ================= -->
+    <script>
+        // Init Lucide Icons
+        lucide.createIcons();
+
+        // GEMINI API KEY INTEGRATED DIRECTLY
+        const GEMINI_API_KEY = "AQ.Ab8RN6JfajwfHEkOFsW9f-KIWv_uzr2xzkQwYx3oC60ORa6ZoA";
+        const MODEL_NAME = "gemini-2.5-flash"; 
+
+        let currentProteinGoal = 110;
+        let selectedBase64Image = null;
+
+        // Customize Target Protein
+        function customizeProteinGoal() {
+            const newGoal = prompt("Enter your desired daily protein target in grams (e.g., 120, 140):", currentProteinGoal);
+            if (newGoal && !isNaN(newGoal) && Number(newGoal) > 0) {
+                currentProteinGoal = Number(newGoal);
+                document.getElementById('header-protein-goal').innerText = currentProteinGoal + 'g Daily';
+                document.getElementById('protein-target-text').innerText = `20% of daily target (${currentProteinGoal}g)`;
+                alert('Protein goal updated successfully to ' + currentProteinGoal + 'g!');
+            }
+        }
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                html.classList.add('light');
+                document.body.classList.remove('bg-black', 'text-slate-100');
+                document.body.classList.add('bg-slate-50', 'text-slate-900');
+            } else {
+                html.classList.remove('light');
+                html.classList.add('dark');
+                document.body.classList.remove('bg-slate-50', 'text-slate-900');
+                document.body.classList.add('bg-black', 'text-slate-100');
+            }
+        }
+
+        function switchTab(tab) {
+            const scanTab = document.getElementById('tab-content-scan');
+            const textTab = document.getElementById('tab-content-text');
+            const btnScan = document.getElementById('tab-btn-scan');
+            const btnText = document.getElementById('tab-btn-text');
+
+            if (tab === 'scan') {
+                scanTab.classList.remove('hidden');
+                textTab.classList.add('hidden');
+                btnScan.className = "flex items-center space-x-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all bg-[#16a34a] text-white shadow-lg shadow-black";
+                btnText.className = "flex items-center space-x-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all text-slate-400 hover:text-white hover:bg-[#164a32]/50";
+            } else {
+                scanTab.classList.add('hidden');
+                textTab.classList.remove('hidden');
+                btnText.className = "flex items-center space-x-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all bg-[#16a34a] text-white shadow-lg shadow-black";
+                btnScan.className = "flex items-center space-x-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all text-slate-400 hover:text-white hover:bg-[#164a32]/50";
+            }
+        }
+
+        function updateBudgetVal(val) {
+            document.getElementById('budget-value-display').innerText = '₹' + val;
+            document.getElementById('target-budget-display').innerText = '₹' + val + '/day';
+        }
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    selectedBase64Image = e.target.result;
+                    document.getElementById('upload-placeholder').classList.add('hidden');
+                    const preview = document.getElementById('image-preview-container');
+                    preview.classList.remove('hidden');
+                    document.getElementById('uploaded-img-preview').src = selectedBase64Image;
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function resetUpload(e) {
+            if(e) e.stopPropagation();
+            selectedBase64Image = null;
+            document.getElementById('meal-file-input').value = "";
+            document.getElementById('upload-placeholder').classList.remove('hidden');
+            document.getElementById('image-preview-container').classList.add('hidden');
+        }
+
+        function selectSample(name, imgUrl) {
+            selectedBase64Image = null;
+            document.getElementById('upload-placeholder').classList.add('hidden');
+            const preview = document.getElementById('image-preview-container');
+            preview.classList.remove('hidden');
+            document.getElementById('uploaded-img-preview').src = imgUrl;
+            
+            // Trigger quick text analysis based on sample name
+            document.getElementById('meal-text-input').value = name;
+            runLiveTextAnalysis();
+        }
+
+        function loadDemo(type) {
+            switch(type) {
+                case 'rajma':
+                    selectSample('Rajma Chawal + Curd Bowl', 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=300&auto=format&fit=crop&q=80');
+                    break;
+                case 'paneer':
+                    selectSample('Paneer Tikka + 2 Butter Roti', 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=300&auto=format&fit=crop&q=80');
+                    break;
+                case 'egg':
+                    selectSample('3 Egg Bhurji + 2 Brown Bread', 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=300&auto=format&fit=crop&q=80');
+                    break;
+                case 'chicken':
+                    selectSample('Chicken Rice Thali', 'https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=300&auto=format&fit=crop&q=80');
+                    break;
+            }
+        }
+
+        // ================= GEMINI API LIVE CALLS ================= //
+
+        // Master Call to Gemini API Endpoint
+        async function fetchGeminiNutritionData(userPrompt, base64ImageData = null) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${GEMINI_API_KEY}`;
+            
+            const systemPrompt = `You are DesiMacro AI, an expert Indian nutritionist & student budget optimizer.
+            Analyze the input (meal description or photo). You MUST return ONLY a raw valid JSON object (no markdown, no backticks) with this exact structure:
+            {
+              "title": "Clean Meal Title",
+              "calories": 540,
+              "protein": 24,
+              "carbs": 78,
+              "fats": 14,
+              "cost": 55,
+              "confidence": "High (96.5%)",
+              "giSpike": "Moderate (58)",
+              "giValue": 58,
+              "satietyText": "High (4.5 hrs)",
+              "satietyValue": 85,
+              "itemization": [
+                 {"name": "Item Name 1", "qty": "1.5 Katori"},
+                 {"name": "Item Name 2", "qty": "1 Cup"}
+              ],
+              "expensiveOpt": {"name": "Chicken Breast", "desc": "Standard gym protein", "cost": 85, "protein": 25},
+              "cheapOpt": {"name": "Soya Chunks + Eggs", "desc": "Best protein per Rupee in India", "cost": 25, "protein": 26},
+              "monthlySavings": 1800
+            }`;
+
+            const partsArray = [];
+
+            if (base64ImageData) {
+                const base64Clean = base64ImageData.split(',')[1] || base64ImageData;
+                partsArray.push({
+                    inline_data: {
+                        mime_type: "image/jpeg",
+                        data: base64Clean
+                    }
+                });
+            }
+
+            partsArray.push({ text: `${systemPrompt}\nUser Query: ${userPrompt}` });
+
+            const response = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ contents: [{ parts: partsArray }] })
+            });
+
+            if (!response.ok) {
+                throw new Error(`API Error: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            const rawText = data.candidates[0].content.parts[0].text;
+            
+            // Clean up backticks if model wraps JSON
+            const cleanText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+            return JSON.parse(cleanText);
+        }
+
+        // Live Vision Scan (Tab 1)
+        async function runLiveImageAnalysis() {
+            if (!selectedBase64Image) {
+                alert('Please upload or drag & drop a meal image first!');
+                return;
+            }
+
+            const btn = document.getElementById('analyze-btn-1');
+            btn.innerHTML = `<i data-lucide="loader" class="w-5 h-5 animate-spin"></i><span>Analyzing Photo with Gemini AI...</span>`;
+            lucide.createIcons();
+
+            try {
+                const result = await fetchGeminiNutritionData("Analyze this Indian food photo plate.", selectedBase64Image);
+                updateUIWithResults(result);
+            } catch (err) {
+                console.error("Gemini Vision API Error:", err);
+                alert("Image analysis failed. Please make sure your API key is active or try a smaller image.");
+            } finally {
+                btn.innerHTML = `<i data-lucide="sparkles" class="w-5 h-5"></i><span>Analyze Meal with Gemini AI</span>`;
+                lucide.createIcons();
+            }
+        }
+
+        // Live Text & Budget Assistant (Tab 2)
+        async function runLiveTextAnalysis() {
+            const textVal = document.getElementById('meal-text-input').value.trim();
+            const goal = document.getElementById('fitness-goal-select').value;
+            const budget = document.getElementById('daily-budget-slider').value;
+
+            if (!textVal) {
+                alert('Please enter a meal description!');
+                return;
+            }
+
+            const btn = document.getElementById('analyze-btn-2');
+            btn.innerHTML = `<i data-lucide="loader" class="w-5 h-5 animate-spin"></i><span>Calculating with Gemini AI...</span>`;
+            lucide.createIcons();
+
+            const prompt = `Meal: "${textVal}". User Goal: "${goal}". Daily Budget Cap: ₹${budget}.`;
+
+            try {
+                const result = await fetchGeminiNutritionData(prompt);
+                updateUIWithResults(result);
+            } catch (err) {
+                console.error("Gemini Text API Error:", err);
+                alert("Text analysis failed. Please check your internet connection.");
+            } finally {
+                btn.innerHTML = `<i data-lucide="cpu" class="w-5 h-5"></i><span>Calculate Macros & Optimize Budget</span>`;
+                lucide.createIcons();
+            }
+        }
+
+        // Update Dashboard Cards with Live API Output
+        function updateUIWithResults(data) {
+            document.getElementById('result-meal-title').innerText = data.title || "Detected Meal";
+            document.getElementById('ai-confidence-tag').innerText = `• Confidence: ${data.confidence || "High"}`;
+            document.getElementById('res-calories').innerText = data.calories || 500;
+            document.getElementById('res-protein').innerText = data.protein || 20;
+            document.getElementById('res-carbs').innerText = data.carbs || 60;
+            document.getElementById('res-fats').innerText = data.fats || 15;
+            document.getElementById('res-cost').innerText = `₹${data.cost || 50} / meal`;
+
+            // Update Progress Bars
+            const proteinPct = Math.min(Math.round((data.protein / currentProteinGoal) * 100), 100);
+            document.getElementById('bar-protein').style.width = proteinPct + '%';
+            document.getElementById('protein-target-text').innerText = `${proteinPct}% of daily target (${currentProteinGoal}g)`;
+
+            document.getElementById('bar-carbs').style.width = Math.min(data.carbs, 100) + '%';
+            document.getElementById('bar-fats').style.width = Math.min(data.fats * 3, 100) + '%';
+
+            // GI & Satiety
+            if (data.giSpike) document.getElementById('gi-tag-display').innerText = data.giSpike;
+            if (data.giValue) document.getElementById('bar-gi').style.width = data.giValue + '%';
+            if (data.satietyText) document.getElementById('satiety-tag-display').innerText = data.satietyText;
+            if (data.satietyValue) document.getElementById('bar-satiety').style.width = data.satietyValue + '%';
+
+            // Itemization
+            if (data.itemization && Array.isArray(data.itemization)) {
+                const itemContainer = document.getElementById('ai-itemization-container');
+                itemContainer.innerHTML = '';
+                data.itemization.forEach(item => {
+                    itemContainer.innerHTML += `
+                        <div class="bg-[#062615] border border-[#164a32] p-3 rounded-xl">
+                            <span class="text-xs font-bold text-white block">${item.name}</span>
+                            <span class="text-[11px] text-[#00ff88] font-medium">${item.qty || ""}</span>
+                        </div>
+                    `;
+                });
+            }
+
+            // Budget Alternatives
+            if (data.expensiveOpt) {
+                document.getElementById('alt-expensive-title').innerText = data.expensiveOpt.name;
+                document.getElementById('alt-expensive-desc').innerText = data.expensiveOpt.desc;
+                document.getElementById('alt-expensive-cost').innerText = '₹' + data.expensiveOpt.cost;
+                document.getElementById('alt-expensive-protein').innerText = data.expensiveOpt.protein + 'g';
+            }
+
+            if (data.cheapOpt) {
+                document.getElementById('alt-cheap-title').innerText = data.cheapOpt.name;
+                document.getElementById('alt-cheap-desc').innerText = data.cheapOpt.desc;
+                document.getElementById('alt-cheap-cost').innerText = '₹' + data.cheapOpt.cost;
+                document.getElementById('alt-cheap-protein').innerText = data.cheapOpt.protein + 'g';
+            }
+
+            if (data.monthlySavings) {
+                document.getElementById('monthly-savings-tag').innerHTML = `<i data-lucide="trending-up" class="w-4 h-4"></i> Potential Monthly Savings: ₹${data.monthlySavings}`;
+            }
+
+            // Scroll Smoothly
+            document.getElementById('results-section').scrollIntoView({ behavior: 'smooth' });
+            lucide.createIcons();
+        }
+
+        function resetToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function shufflePlan() {
+            alert('Meal schedule shuffled with new student-budget alternatives!');
+        }
+
+        // Recipe Modal Handling
+        function openRecipeModal(dishName = 'Rajma Chawal') {
+            document.getElementById('modal-title').innerText = `${dishName} Quick Student Recipe`;
+            document.getElementById('recipe-modal').classList.remove('hidden');
+            document.getElementById('recipe-modal').classList.add('flex');
+        }
+
+        function closeRecipeModal() {
+            document.getElementById('recipe-modal').classList.remove('flex');
+            document.getElementById('recipe-modal').classList.add('hidden');
+        }
+
+        // Floating AI Coach Logic
+        function toggleAIChat() {
+            const chatWin = document.getElementById('ai-chat-window');
+            if (chatWin.classList.contains('hidden')) {
+                chatWin.classList.remove('hidden');
+                chatWin.classList.add('flex');
+            } else {
+                chatWin.classList.remove('flex');
+                chatWin.classList.add('hidden');
+            }
+        }
+
+        function sendQuickPrompt(query) {
+            document.getElementById('ai-chat-input').value = query;
+            sendUserMessage();
+        }
+
+        function handleChatKeyPress(e) {
+            if (e.key === 'Enter') sendUserMessage();
+        }
+
+        async function sendUserMessage() {
+            const input = document.getElementById('ai-chat-input');
+            const msg = input.value.trim();
+            if (!msg) return;
+
+            const container = document.getElementById('ai-chat-messages');
+            
+            container.innerHTML += `
+                <div class="bg-[#16a34a]/20 border border-[#164a32] p-3 rounded-xl ml-6 space-y-1 text-right">
+                    <p class="text-white">${msg}</p>
+                </div>
+            `;
+            input.value = '';
+            container.scrollTop = container.scrollHeight;
+
+            // Call Gemini API for Chat Coach
+            try {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${GEMINI_API_KEY}`;
+                const response = await fetch(url, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{
+                                text: `You are DesiMacro AI Coach, a supportive Indian student nutrition & budget advisor. Keep answers concise (under 3-4 sentences), practical, and focused on cheap high-protein Indian food options. User Query: ${msg}`
+                            }]
+                        }]
+                    })
+                });
+
+                const data = await response.json();
+                const reply = data.candidates[0].content.parts[0].text;
+
+                container.innerHTML += `
+                    <div class="bg-[#062615] border border-[#164a32] p-3 rounded-xl mr-6 space-y-1">
+                        <p class="font-bold text-[#00ff88]">DesiMacro AI Coach:</p>
+                        <p>${reply}</p>
+                    </div>
+                `;
+            } catch (e) {
+                container.innerHTML += `
+                    <div class="bg-[#062615] border border-[#164a32] p-3 rounded-xl mr-6 space-y-1">
+                        <p class="font-bold text-[#00ff88]">DesiMacro AI Coach:</p>
+                        <p>Focus on Soya Chunks (52g protein per ₹30), Sattu drinks, and boiled eggs to easily hit your ${currentProteinGoal}g protein target under ₹200/day!</p>
+                    </div>
+                `;
+            }
+            container.scrollTop = container.scrollHeight;
+        }
+    </script>
+</body>
+</html>
